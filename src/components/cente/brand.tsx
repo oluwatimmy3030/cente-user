@@ -1,5 +1,6 @@
-import { Gem } from "lucide-react";
+import lightLogo from "@/assets/cente-logo-light.png.asset.json";
+import darkLogo from "@/assets/cente-logo-dark.jpg.asset.json";
 
-export function Brand({ compact = false }: { compact?: boolean }) {
-  return <div className="flex items-center gap-2"><span className="grid size-9 place-items-center rounded-lg bg-primary text-primary-foreground shadow-gold"><Gem className="size-5" /></span>{!compact && <span className="font-display text-xl font-semibold tracking-[0.14em] text-foreground">CENTE</span>}</div>;
+export function Brand({ compact = false, onDark = false }: { compact?: boolean; onDark?: boolean }) {
+  return <img src={(onDark ? darkLogo : lightLogo).url} alt="CENTE" className={compact ? "h-9 w-9 object-cover object-left" : "h-9 w-auto max-w-32 object-contain"} />;
 }

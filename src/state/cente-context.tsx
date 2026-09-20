@@ -44,7 +44,9 @@ function useCenteState() {
     if (type === "gold-buy") { const grams = amount / goldPrice[currency === "USD" ? "USD" : "NGN"]; next.balances[currency] -= amount; next.gold.grams += grams; next.gold.invested += currency === "USD" ? amount * 1548.2 : amount; title = "Safevest Gold purchase"; category = "Gold"; }
     if (type === "gold-sell") { const payout = amount * goldPrice[currency === "USD" ? "USD" : "NGN"] * .995; next.gold.grams -= amount; next.balances[currency] += payout; title = "Safevest Gold redemption"; category = "Gold"; txAmount = payout; }
     next.balances.GOLD = next.gold.grams * goldPrice.NGN;
-    next.transactions.unshift({ id: crypto.randomUUID(), title, subtitle: "CENTE demo transaction", amount: txAmount, currency, category, status: "Completed", date: "Just now", quantity: type.startsWith("gold") ? (type === "gold-buy" ? amount / goldPrice[currency === "USD" ? "USD" : "NGN"] : amount) : undefined, fee: Math.max(amount * .005, 0) });
+    const transaction: Transaction = { id: crypto.randomUUID(), title, subtitle: "CENTE demo transaction", amount: txAmount, currency, category, status: "Completed", date: "Just now", fee: Math.max(amount * .005, 0) };
+    if (type.startsWith("gold")) transaction.quantity = type === "gold-buy" ? amount / goldPrice[currency === "USD" ? "USD" : "NGN"] : amount;
+    next.transactions.unshift(transaction);
     setState(next);
   };
   return { ...state, hydrated, completeAction, toggleHidden: () => setState((s) => ({ ...s, hidden: !s.hidden })), verify: () => setState((s) => ({ ...s, verified: true })), setupPin: () => setState((s) => ({ ...s, pinSet: true })), markAllRead: () => setState((s) => ({ ...s, notifications: s.notifications.map((n) => ({ ...n, read: true })) })), reset: () => setState(initialState) };

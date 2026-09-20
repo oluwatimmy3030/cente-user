@@ -8,9 +8,9 @@ import { useCente } from "@/state/cente-context";
 import { MiniChart, TransactionRow } from "./ui";
 import { WelcomeGate } from "./welcome-gate";
 
-const actions = [
+const actions: ReadonlyArray<{label:string; icon:typeof ArrowDownToLine; kind:FlowKind; currency?:Currency}> = [
   { label:"Fund wallet", icon:ArrowDownToLine, kind:"fund" }, { label:"Send money",icon:Send,kind:"send" }, { label:"Safevest USD",icon:Landmark,kind:"save",currency:"USD" }, { label:"Safevest NGN",icon:WalletCards,kind:"save",currency:"NGN" }, { label:"Safevest Gold",icon:Gem,kind:"gold-buy",currency:"NGN" }, { label:"USDT swap",icon:RefreshCw,kind:"swap",currency:"USDT" },
-] as const;
+];
 
 export function HomePage() {
   const { balances, hidden, toggleHidden, transactions, gold }=useCente(); const [currency,setCurrency]=useState<Currency>("NGN"); const [flow,setFlow]=useState<{kind:FlowKind;currency:Currency}|null>(null);

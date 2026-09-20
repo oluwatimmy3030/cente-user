@@ -8,10 +8,10 @@ import { useCente } from "@/state/cente-context";
 
 export type FlowKind = "fund" | "send" | "swap" | "save" | "withdraw" | "gold-buy" | "gold-sell";
 
-export function ActionFlow({ kind, open, onOpenChange, presetCurrency="NGN" }: { kind:FlowKind; open:boolean; onOpenChange:(v:boolean)=>void; presetCurrency?:Currency }) {
+export function ActionFlow({ kind, open, onOpenChange, presetCurrency="NGN" }: { kind:FlowKind; open:boolean; onOpenChange:(v:boolean)=>void; presetCurrency?:Currency|undefined }) {
   const { balances, gold, completeAction, verified, verify, pinSet, setupPin }=useCente();
   const [step,setStep]=useState<"form"|"kyc"|"review"|"pin"|"loading"|"success">("form");
-  const [currency,setCurrency]=useState<Currency>(presetCurrency); const [to,setTo]=useState<Currency>("USD"); const [amount,setAmount]=useState(""); const [recipient,setRecipient]=useState(recipients[0].name); const [pin,setPin]=useState(""); const [kyc,setKyc]=useState(""); const [error,setError]=useState("");
+  const [currency,setCurrency]=useState<Currency>(presetCurrency); const [to,setTo]=useState<Currency>("USD"); const [amount,setAmount]=useState(""); const [recipient,setRecipient]=useState(recipients[0]?.name ?? "Ada Okafor"); const [pin,setPin]=useState(""); const [kyc,setKyc]=useState(""); const [error,setError]=useState("");
   const numeric=Number(amount)||0; const isGoldSell=kind==="gold-sell"; const title={fund:"Fund wallet",send:"Send money",swap:"Convert currency",save:"Add to Safevest",withdraw:"Withdraw savings","gold-buy":"Buy Safevest Gold","gold-sell":"Redeem gold"}[kind];
   const estimate=useMemo(()=>{ if(kind==="gold-buy") return numeric/goldPrice[currency==="USD"?"USD":"NGN"]; if(kind==="gold-sell") return numeric*goldPrice[currency==="USD"?"USD":"NGN"]*.995; if(kind==="swap") { const r=currency==="NGN"&&to==="USD"?1/rates.NGN_USD:currency==="NGN"&&to==="USDT"?1/rates.NGN_USDT:currency==="USD"&&to==="USDT"?rates.USD_USDT:currency==="USDT"&&to==="USD"?1/rates.USD_USDT:currency==="USD"&&to==="NGN"?rates.NGN_USD:rates.NGN_USDT; return numeric*r*.995; } return numeric; },[kind,numeric,currency,to]);
   const close=(value:boolean)=>{onOpenChange(value); if(!value) setTimeout(()=>{setStep("form");setAmount("");setPin("");setError("")},250)};

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as WealthRouteImport } from './routes/wealth'
@@ -23,6 +24,11 @@ const IndexRoute = IndexRouteImport.update({
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TransactionsRoute = TransactionsRouteImport.update({
@@ -44,6 +50,7 @@ const WealthRoute = WealthRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/notifications': typeof NotificationsRoute
+  '/profile': typeof ProfileRoute
   '/transactions': typeof TransactionsRoute
   '/wallet': typeof WalletRoute
   '/wealth': typeof WealthRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/notifications': typeof NotificationsRoute
+  '/profile': typeof ProfileRoute
   '/transactions': typeof TransactionsRoute
   '/wallet': typeof WalletRoute
   '/wealth': typeof WealthRoute
@@ -59,19 +67,33 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/notifications': typeof NotificationsRoute
+  '/profile': typeof ProfileRoute
   '/transactions': typeof TransactionsRoute
   '/wallet': typeof WalletRoute
   '/wealth': typeof WealthRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/notifications' | '/transactions' | '/wallet' | '/wealth'
+  fullPaths:
+    | '/'
+    | '/notifications'
+    | '/profile'
+    | '/transactions'
+    | '/wallet'
+    | '/wealth'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/notifications' | '/transactions' | '/wallet' | '/wealth'
+  to:
+    | '/'
+    | '/notifications'
+    | '/profile'
+    | '/transactions'
+    | '/wallet'
+    | '/wealth'
   id:
     | '__root__'
     | '/'
     | '/notifications'
+    | '/profile'
     | '/transactions'
     | '/wallet'
     | '/wealth'
@@ -80,6 +102,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   NotificationsRoute: typeof NotificationsRoute
+  ProfileRoute: typeof ProfileRoute
   TransactionsRoute: typeof TransactionsRoute
   WalletRoute: typeof WalletRoute
   WealthRoute: typeof WealthRoute
@@ -99,6 +122,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/transactions': {
@@ -128,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   NotificationsRoute: NotificationsRoute,
+  ProfileRoute: ProfileRoute,
   TransactionsRoute: TransactionsRoute,
   WalletRoute: WalletRoute,
   WealthRoute: WealthRoute,

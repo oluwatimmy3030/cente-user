@@ -1,6 +1,6 @@
 {
-  "name": "CENTE — Wealth & Payments",
-  "short_name": "CENTE",
+  "name": "Xential Samuel — Wealth & Payments",
+  "short_name": "Xential Samuel",
   "description": "Borderless wealth, payments and digital gold.",
   "start_url": "/",
   "scope": "/",
@@ -8,7 +8,7 @@
   "background_color": "#FBF8F0",
   "theme_color": "#D4AF37",
   "icons": [
-    { "src": "/icons/cente-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/icons/cente-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/logo-light.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/logo-light.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }

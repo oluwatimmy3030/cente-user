@@ -1,3 +1,0 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { HomePage } from "@/components/cente/home-page";
-export const Route = createFileRoute("/")({head:()=>({meta:[{title:"Home — CENTE"},{name:"description",content:"Manage your CENTE wallets, payments and wealth."},{property:"og:title",content:"Home — CENTE"},{property:"og:description",content:"Manage your CENTE wallets, payments and wealth."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:HomePage});

@@ -1,0 +1,51 @@
+import { useState } from "react";
+import { ArrowDownToLine, Gem, RefreshCw, Send } from "lucide-react";
+import { ActionFlow } from "./action-flow";
+import { AssetIcon, PageTitle, TransactionRow } from "./ui";
+import { Button } from "@/components/ui/button";
+import { formatMoney } from "@/data/mock-data";
+import { useCente } from "@/state/cente-context";
+
+export default function WalletPage() {
+  const { balances, gold, transactions } = useCente();
+  const [flow, setFlow] = useState(null);
+  const assets = ["NGN", "USD", "USDT", "GOLD"];
+  return (
+    <>
+      <PageTitle eyebrow="Your money" title="Wallet" copy="One view of every active CENTE balance." />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {assets.map((c) => (
+          <div key={c} className="panel p-5">
+            <div className="flex items-start justify-between">
+              <AssetIcon currency={c} />
+              <span className="text-xs text-muted-foreground">{c}</span>
+            </div>
+            <p className="mt-6 text-2xl font-semibold">{c === "GOLD" ? `${gold.grams.toFixed(3)}g` : formatMoney(balances[c], c)}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {c === "GOLD" ? `${formatMoney(balances.GOLD)} market value · +13.9%` : "Available balance · Demo"}
+            </p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-5 grid grid-cols-3 gap-3">
+        <Button variant="premium" onClick={() => setFlow({ kind: "fund", currency: "NGN" })}><ArrowDownToLine /> Fund</Button>
+        <Button variant="premium" onClick={() => setFlow({ kind: "send", currency: "NGN" })}><Send /> Send</Button>
+        <Button variant="premium" onClick={() => setFlow({ kind: "swap", currency: "NGN" })}><RefreshCw /> Swap</Button>
+      </div>
+      <div className="mt-8 grid gap-5 xl:grid-cols-[.7fr_1.3fr]">
+        <div className="balance-card rounded-xl p-5">
+          <Gem className="text-primary" />
+          <p className="mt-8 text-xs text-primary-foreground/60">Safevest Gold</p>
+          <h2 className="mt-1 font-display text-3xl text-primary-foreground">{gold.grams.toFixed(3)}g</h2>
+          <div className="mt-5 flex justify-between text-xs text-primary-foreground/60"><span>Invested</span><strong className="text-primary-foreground">{formatMoney(gold.invested)}</strong></div>
+          <Button className="mt-5 w-full" onClick={() => setFlow({ kind: "gold-buy", currency: "NGN" })}>Manage gold</Button>
+        </div>
+        <div className="panel p-5">
+          <h2 className="mb-2 text-lg font-semibold">Wallet activity</h2>
+          {transactions.slice(0, 5).map((tx) => <TransactionRow key={tx.id} tx={tx} />)}
+        </div>
+      </div>
+      <ActionFlow kind={flow?.kind ?? "fund"} presetCurrency={flow?.currency} open={Boolean(flow)} onOpenChange={(v) => !v && setFlow(null)} />
+    </>
+  );
+}

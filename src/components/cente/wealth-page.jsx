@@ -1,61 +1,16 @@
-import { useState } from "react";
-import { Gem, Landmark, TrendingUp } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CalendarDays, Check, Clock3, Gem, Landmark, LockKeyhole, ShieldCheck } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { ActionFlow } from "./action-flow";
-import { MiniChart, PageTitle, TransactionRow } from "./ui";
+import { MiniChart, PageTitle } from "./ui";
 import { Button } from "@/components/ui/button";
-import { formatMoney, goldPrice, safevestProducts } from "@/data/mock-data";
+import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { formatMoney, formatOunces, goldPrice, safevestProducts } from "@/data/mock-data";
 import { useCente } from "@/state/cente-context";
 
-export default function WealthPage() {
-  const { gold, transactions } = useCente();
-  const [active, setActive] = useState("GOLD");
-  const [flow, setFlow] = useState(null);
-  const product = safevestProducts.find((p) => p.id === active);
-  const isGold = active === "GOLD";
-  const balance = isGold ? gold.grams * goldPrice.NGN : product?.balance ?? 0;
-  const currency = isGold ? "NGN" : active;
-  return (
-    <>
-      <PageTitle eyebrow="Safevest" title="Build lasting wealth" copy="Flexible mock savings in NGN, USD and fully featured digital gold." />
-      <div className="flex gap-2 overflow-x-auto pb-4">
-        {["USD", "NGN", "GOLD"].map((c) => (
-          <button key={c} onClick={() => setActive(c)} className={active === c ? "currency-pill-active" : "currency-pill"}>Safevest {c === "GOLD" ? "Gold" : c}</button>
-        ))}
-      </div>
-      <div className="grid gap-5 xl:grid-cols-[1.25fr_.75fr]">
-        <div className={isGold ? "balance-card rounded-xl p-5 sm:p-7" : "panel p-5 sm:p-7"}>
-          <div className="flex items-center justify-between">
-            <span className={`grid size-12 place-items-center rounded-lg ${isGold ? "bg-primary text-primary-foreground" : "bg-secondary text-primary"}`}>
-              {isGold ? <Gem /> : <Landmark />}
-            </span>
-            <span className="flex items-center gap-1 text-xs text-success"><TrendingUp className="size-3" /> {isGold ? "+13.9%" : "+4.8%"}</span>
-          </div>
-          <p className={`mt-8 text-xs ${isGold ? "text-primary-foreground/60" : "text-muted-foreground"}`}>Current value</p>
-          <h2 className={`mt-1 font-display text-4xl ${isGold ? "text-primary-foreground" : ""}`}>{formatMoney(balance, currency)}</h2>
-          {isGold && <p className="mt-1 text-sm text-primary-foreground/65">{gold.grams.toFixed(3)}g at {formatMoney(goldPrice.NGN)}/g</p>}
-          <div className="mt-6"><MiniChart tone={isGold ? "gold" : "green"} /></div>
-          <div className="grid grid-cols-3 gap-3 border-t border-border/60 pt-5 text-xs">
-            <div><span className="text-muted-foreground">Invested</span><strong className="mt-1 block">{formatMoney(isGold ? gold.invested : product?.contributed ?? 0, currency)}</strong></div>
-            <div><span className="text-muted-foreground">Gain</span><strong className="mt-1 block text-success">{formatMoney(isGold ? gold.invested * 0.139 : product?.gain ?? 0, currency)}</strong></div>
-            <div><span className="text-muted-foreground">Rate</span><strong className="mt-1 block">{isGold ? "Mock" : product?.rate}</strong></div>
-          </div>
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            <Button variant="outline" onClick={() => setFlow({ kind: "save", currency })}>Add funds</Button>
-            <Button variant="outline" onClick={() => setFlow({ kind: "withdraw", currency })}>Withdraw</Button>
-          </div>
-          {isGold && (
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <Button variant="outline" onClick={() => setFlow({ kind: "gold-buy", currency: "NGN" })}>Buy gold</Button>
-              <Button variant="outline" onClick={() => setFlow({ kind: "gold-sell", currency: "NGN" })}>Redeem gold</Button>
-            </div>
-          )}
-        </div>
-        <div className="panel p-5">
-          <h2 className="mb-2 text-lg font-semibold">Wealth activity</h2>
-          {transactions.slice(0, 5).map((tx) => <TransactionRow key={tx.id} tx={tx} />)}
-        </div>
-      </div>
-      <ActionFlow kind={flow?.kind ?? "save"} presetCurrency={flow?.currency} open={Boolean(flow)} onOpenChange={(v) => !v && setFlow(null)} />
-    </>
-  );
-}
+const durations=[1,3,6,9,12];
+export default function WealthPage(){const [params]=useSearchParams();const requested=params.get("product");const [active,setActive]=useState(["USD","NGN","GOLD"].includes(requested)?requested:"GOLD");const [flow,setFlow]=useState(null),[planOpen,setPlanOpen]=useState(false);const {gold,plans,createPlan}=useCente();useEffect(()=>{if(["USD","NGN","GOLD"].includes(requested))setActive(requested)},[requested]);const product=safevestProducts.find((p)=>p.id===active),isGold=active==="GOLD",currency=isGold?"NGN":active,balance=isGold?gold.ounces*goldPrice.NGN:product?.balance??0;const visiblePlans=plans.filter((p)=>p.product===active);
+return <><PageTitle eyebrow="Safevest" title="Savings Plans" copy="Build structured USD, NGN and Gold plans with flexible access or a fixed Safe Lock."/><div className="flex gap-2 overflow-x-auto pb-4">{["USD","NGN","GOLD"].map((c)=><Button key={c} variant={active===c?"default":"outline"} onClick={()=>setActive(c)}>Safevest {c==="GOLD"?"Gold":c}</Button>)}</div><div className="grid gap-5 xl:grid-cols-[1.2fr_.8fr]"><div className={isGold?"balance-card rounded-xl p-5 sm:p-7":"panel p-5 sm:p-7"}><div className="flex items-center justify-between"><span className={`grid size-12 place-items-center rounded-lg ${isGold?"bg-primary text-primary-foreground":"bg-secondary text-primary"}`}>{isGold?<Gem/>:<Landmark/>}</span><span className={`text-xs ${isGold?"text-primary-foreground/70":"text-muted-foreground"}`}>Mock performance</span></div><p className={`mt-7 text-xs ${isGold?"text-primary-foreground/60":"text-muted-foreground"}`}>{isGold?"Current gold value":"Amount saved"}</p><h2 className={`mt-1 font-display text-4xl ${isGold?"text-primary-foreground":""}`}>{formatMoney(balance,currency)}</h2>{isGold&&<p className="mt-1 text-sm text-primary-foreground/70">{formatOunces(gold.ounces)} · {formatMoney(goldPrice.NGN)} per OZ</p>}<MiniChart/><div className="mt-5 grid grid-cols-3 gap-3 border-t border-border/60 pt-5 text-xs"><div><span className={isGold?"text-primary-foreground/60":"text-muted-foreground"}>Active plans</span><strong className="mt-1 block">{visiblePlans.filter((p)=>p.status==="Active").length}</strong></div><div><span className={isGold?"text-primary-foreground/60":"text-muted-foreground"}>Pending</span><strong className="mt-1 block">{visiblePlans.filter((p)=>p.status==="Pending").length}</strong></div><div><span className={isGold?"text-primary-foreground/60":"text-muted-foreground"}>Product rate</span><strong className="mt-1 block">{isGold?"Market based":product?.rate}</strong></div></div><Button className="mt-6 w-full" size="lg" onClick={()=>setPlanOpen(true)}>Create Plan</Button>{isGold&&<div className="mt-3 grid grid-cols-2 gap-3"><Button variant="outline" onClick={()=>setFlow({kind:"gold-buy",currency:"NGN"})}>Buy Gold</Button><Button variant="outline" onClick={()=>setFlow({kind:"gold-sell",currency:"NGN"})}>Sell Gold</Button></div>}</div><div className="panel p-5"><h2 className="text-lg font-semibold">How plans work</h2><div className="mt-5 space-y-5">{[[CalendarDays,"Choose a duration","Select 1, 3, 6, 9 or 12 months."],[ShieldCheck,"Choose access","Withdraw Anytime or use Safe Lock."],[Clock3,"Track maturity","Follow plan status and countdown in one place."]].map(([Icon,t,c])=><div key={t} className="flex gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-lg bg-secondary text-primary"><Icon className="size-4"/></span><div><strong className="text-sm">{t}</strong><p className="text-xs text-muted-foreground">{c}</p></div></div>)}</div></div></div><PlanLists plans={visiblePlans} currency={currency}/><PlanCreator open={planOpen} onOpenChange={setPlanOpen} product={active} currency={currency} onCreate={createPlan}/><ActionFlow kind={flow?.kind??"gold-buy"} presetCurrency={flow?.currency} open={Boolean(flow)} onOpenChange={(v)=>!v&&setFlow(null)}/></>}
+function PlanLists({plans,currency}){return <section className="mt-8 grid gap-6 xl:grid-cols-2">{["Active","Pending"].map((status)=><div key={status}><div className="mb-3 flex items-center justify-between"><h2 className="text-lg font-semibold">{status} Plans</h2><span className="text-xs text-muted-foreground">{plans.filter((p)=>p.status===status).length}</span></div><div className="space-y-3">{plans.filter((p)=>p.status===status).map((p)=><div key={p.id} className="panel p-5"><div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{p.name}</h3><p className="text-xs text-muted-foreground">{p.duration} months · {p.lock}</p></div><span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${status==="Active"?"bg-success/12 text-success":"bg-warning/12 text-warning"}`}>{status}</span></div><div className="mt-5 grid grid-cols-2 gap-4 text-xs"><div><span className="text-muted-foreground">Amount saved</span><strong className="mt-1 block">{formatMoney(p.amount,currency)}</strong></div><div><span className="text-muted-foreground">Maturity value</span><strong className="mt-1 block">{formatMoney(p.maturityValue,currency)}</strong></div><div><span className="text-muted-foreground">Expected return</span><strong className="mt-1 block text-success">{formatMoney(p.expectedReturn,currency)}</strong></div><div><span className="text-muted-foreground">Countdown</span><strong className="mt-1 block">{p.countdown}</strong></div></div></div>)}{!plans.some((p)=>p.status===status)&&<div className="panel p-8 text-center text-sm text-muted-foreground">No {status.toLowerCase()} plans yet.</div>}</div></div>)}</section>}
+function PlanCreator({open,onOpenChange,product,currency,onCreate}){const [amount,setAmount]=useState(""),[duration,setDuration]=useState(3),[frequency,setFrequency]=useState("Monthly"),[lock,setLock]=useState("Withdraw Anytime"),[created,setCreated]=useState(false);const numeric=Number(amount)||0,rate=product==="USD"?.052:product==="NGN"?.125:.07,expected=useMemo(()=>numeric*rate*(duration/12),[numeric,rate,duration]),ounces=product==="GOLD"?numeric/goldPrice.NGN:0;const submit=()=>{if(numeric<=0)return;const start=new Date("2026-09-22T12:00:00Z"),end=new Date(start);end.setMonth(end.getMonth()+duration);onCreate({product,name:`${product==="GOLD"?"Gold":product} savings plan`,amount:numeric,ounces,frequency,duration,expectedReturn:expected,maturityValue:numeric+expected,startDate:start.toISOString().slice(0,10),endDate:end.toISOString().slice(0,10),countdown:`${duration*30} days`,lock,status:"Pending"});setCreated(true)};return <Sheet open={open} onOpenChange={(v)=>{onOpenChange(v);if(!v)setTimeout(()=>setCreated(false),200)}}><SheetContent side="bottom" className="mx-auto max-h-[94vh] overflow-y-auto rounded-t-2xl bg-background sm:bottom-4 sm:max-w-xl sm:rounded-2xl"><SheetHeader><SheetTitle>Create Safevest {product==="GOLD"?"Gold":product} Plan</SheetTitle><SheetDescription>Mock plan setup · No funds are committed</SheetDescription></SheetHeader>{created?<div className="grid min-h-80 place-items-center px-5 text-center"><div><span className="mx-auto grid size-16 place-items-center rounded-full bg-success/12 text-success"><Check/></span><h3 className="mt-5 font-display text-3xl">Plan created</h3><p className="mt-2 text-sm text-muted-foreground">Your new plan is pending and ready to review.</p><Button className="mt-6" onClick={()=>onOpenChange(false)}>Done</Button></div></div>:<div className="space-y-5 px-5 pb-8 pt-6"><div><label className="form-label">{product==="GOLD"?"Gold value":"Savings amount"}</label><div className="amount-field"><span>{currency==="USD"?"$":"₦"}</span><Input inputMode="decimal" value={amount} onChange={(e)=>setAmount(e.target.value.replace(/[^0-9.]/g,""))} placeholder="0.00"/></div>{product==="GOLD"&&numeric>0&&<p className="mt-2 text-xs text-muted-foreground">Estimated weight: {formatOunces(ounces)}</p>}</div>{product!=="GOLD"&&<div><label className="form-label">Savings frequency</label><select className="field" value={frequency} onChange={(e)=>setFrequency(e.target.value)}><option>One-time</option><option>Weekly</option><option>Monthly</option></select></div>}<div><label className="form-label">Duration</label><div className="grid grid-cols-5 gap-2">{durations.map((d)=><button key={d} onClick={()=>setDuration(d)} className={duration===d?"choice-active":"choice"}>{d}m</button>)}</div></div><div><label className="form-label">Plan access</label><div className="grid grid-cols-2 gap-2">{[["Withdraw Anytime",ShieldCheck],["Safe Lock",LockKeyhole]].map(([label,Icon])=><button key={label} onClick={()=>setLock(label)} className={`${lock===label?"choice-active":"choice"} flex flex-col items-center justify-center gap-1 px-2`}><Icon className="size-4"/><span>{label}</span></button>)}</div></div><div className="divide-y divide-border rounded-lg border">{[["Expected return",formatMoney(expected,currency)],["Total maturity value",formatMoney(numeric+expected,currency)],["Start date","22 Sep 2026"],["Estimated end",`${duration} months after start`]].map(([k,v])=><div key={k} className="flex justify-between gap-4 p-3 text-sm"><span className="text-muted-foreground">{k}</span><strong className="text-right">{v}</strong></div>)}</div><p className="text-xs text-muted-foreground">Expected values are simulated for this frontend prototype and are not guaranteed returns.</p><Button size="lg" className="w-full" disabled={numeric<=0} onClick={submit}>Create Plan</Button></div>}</SheetContent></Sheet>}

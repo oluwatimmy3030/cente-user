@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { PageTitle, TransactionRow } from "@/components/cente/ui";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { formatMoney } from "@/data/mock-data";
+import { formatMoney, formatOunces } from "@/data/mock-data";
 import { useCente } from "@/state/cente-context";
 
 export default function TransactionsPage() {
@@ -49,7 +49,7 @@ export default function TransactionsPage() {
                   ["Date", selected.date],
                   ["Asset", selected.currency],
                   ["Description", selected.subtitle],
-                  ...(selected.quantity ? [["Gold quantity", `${selected.quantity}g`], ["Price per gram", formatMoney(selected.pricePerGram ?? 0, "NGN")]] : []),
+                  ...(selected.quantity ? [["Gold quantity", `${formatOunces(selected.quantity)}`], ["Price per OZ", formatMoney(selected.pricePerOunce ?? 0, "NGN")]] : []),
                   ["Fee", formatMoney(selected.fee ?? 0, selected.currency)],
                 ].map(([k, v]) => (
                   <div key={k} className="flex justify-between gap-4 p-4 text-sm">

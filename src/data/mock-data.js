@@ -1,10 +1,10 @@
 export const user = {
-  firstName: "Xential", lastName: "Samuel", country: "Nigeria", countryCode: "+234", phone: "801 234 5678", walletId: "XS-8042-1965",
+  firstName: "Samuel", lastName: "Adeyemi", country: "Nigeria", countryCode: "+234", phone: "801 234 5678", walletId: "CT-8042-1965",
 };
 
 export const initialBalances = { USD: 2840.75, NGN: 1250450 };
 export const rates = { NGN_USD: 1548.2 };
-export const goldPrice = { NGN: 4927300, USD: 3182.2 };
+export const goldPrice = { NGN: 4927300, USD: 4364 };
 export const initialGold = { ounces: 0.481, invested: 2080000 };
 export const bankAccounts = {
   USD: { bankName: "CENTE Partner Bank", accountName: "CENTE USD Collections", accountNumber: "021000021", currency: "USD" },

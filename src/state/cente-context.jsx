@@ -3,13 +3,7 @@ import { goldPrice, initialBalances, initialGold, initialNotifications, initialP
 
 const initialState = { balances: initialBalances, gold: initialGold, plans: initialPlans, transactions: initialTransactions, notifications: initialNotifications, verified: false, pinSet: false, hidden: false };
 const CenteContext = createContext(null);
-const normalizeState = (stored) => {
-  if (!stored) return initialState;
-  const oldGold = stored.gold ?? initialGold;
-  const ounces = oldGold.ounces ?? (Number(oldGold.grams) || 14.956) / 31.1035;
-  return { ...initialState, ...stored, balances: { USD: Number(stored.balances?.USD ?? initialBalances.USD), NGN: Number(stored.balances?.NGN ?? initialBalances.NGN) }, gold: { ounces, invested: Number(oldGold.invested ?? initialGold.invested) }, plans: stored.plans ?? initialPlans, transactions: (stored.transactions ?? initialTransactions).filter((tx) => tx.currency !== "US" + "DT").map((tx) => tx.quantity && !tx.pricePerOunce ? { ...tx, quantity: tx.quantity / 31.1035, pricePerOunce: (tx.pricePerGram ?? 0) * 31.1035, subtitle: "Gold transaction · mock market price" } : tx) };
-};
-const getStored = () => { if (typeof window === "undefined") return initialState; try { return normalizeState(JSON.parse(localStorage.getItem("cente-demo-state") ?? "null")); } catch { return initialState; } };
+const getStored = () => { if (typeof window === "undefined") return initialState; try { return JSON.parse(localStorage.getItem("cente-demo-state") ?? "null") ?? initialState; } catch { return initialState; } };
 
 function useCenteState() {
   const [state, setState] = useState(initialState);

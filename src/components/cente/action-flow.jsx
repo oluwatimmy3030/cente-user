@@ -1,173 +1,31 @@
-import { useMemo, useState } from "react";
-import { Check, ChevronLeft, Gem, LoaderCircle, ShieldCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, ChevronLeft, Copy, Gem, LoaderCircle, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { formatMoney, goldPrice, rates, recipients } from "@/data/mock-data";
+import { bankAccounts, formatMoney, formatOunces, goldPrice } from "@/data/mock-data";
 import { useCente } from "@/state/cente-context";
-
-export const FlowKind = ["fund", "send", "swap", "save", "withdraw", "gold-buy", "gold-sell"];
 
 export function ActionFlow({ kind, open, onOpenChange, presetCurrency = "NGN" }) {
   const { balances, gold, completeAction, verified, verify, pinSet, setupPin } = useCente();
-  const [step, setStep] = useState("form");
-  const [currency, setCurrency] = useState(presetCurrency);
-  const [to, setTo] = useState("USD");
-  const [amount, setAmount] = useState("");
-  const [recipient, setRecipient] = useState(recipients[0]?.name ?? "Ada Okafor");
-  const [pin, setPin] = useState("");
-  const [kyc, setKyc] = useState("");
-  const [error, setError] = useState("");
-  const numeric = Number(amount) || 0;
-  const isGoldSell = kind === "gold-sell";
-  const title = { fund: "Fund wallet", send: "Send money", swap: "Convert currency", save: "Add to Safevest", withdraw: "Withdraw savings", "gold-buy": "Buy Safevest Gold", "gold-sell": "Redeem gold" }[kind];
-  const estimate = useMemo(() => {
-    if (kind === "gold-buy") return numeric / goldPrice[currency === "USD" ? "USD" : "NGN"];
-    if (kind === "gold-sell") return numeric * goldPrice[currency === "USD" ? "USD" : "NGN"] * 0.995;
-    if (kind === "swap") {
-      const r = currency === "NGN" && to === "USD" ? 1 / rates.NGN_USD : currency === "NGN" && to === "USDT" ? 1 / rates.NGN_USDT : currency === "USD" && to === "USDT" ? rates.USD_USDT : currency === "USDT" && to === "USD" ? 1 / rates.USD_USDT : currency === "USD" && to === "NGN" ? rates.NGN_USD : rates.NGN_USDT;
-      return numeric * r * 0.995;
-    }
-    return numeric;
-  }, [kind, numeric, currency, to]);
-  const close = (value) => { onOpenChange(value); if (!value) setTimeout(() => { setStep("form"); setAmount(""); setPin(""); setError("") }, 250) };
-  const continueFlow = () => {
-    setError("");
-    if (numeric <= 0) { setError("Enter an amount greater than zero."); return; }
-    if (isGoldSell && numeric > gold.grams) { setError("You do not have enough gold to redeem this quantity."); return; }
-    if (!["fund", "withdraw", "gold-sell"].includes(kind) && numeric > balances[currency]) { setError("Your available balance is too low for this transaction."); return; }
-    if (!verified && ["send", "swap", "save", "withdraw", "gold-buy", "gold-sell"].includes(kind)) { setStep("kyc"); return; }
-    setStep("review");
-  };
-  const submit = () => {
-    if (pin.length !== 4) { setError("Enter your 4-digit security PIN."); return; }
-    if (!pinSet) setupPin();
-    setStep("loading");
-    setTimeout(() => { completeAction({ type: kind, amount: numeric, currency, to, recipient, product: currency === "USD" ? "USD" : "NGN" }); setStep("success") }, 900);
-  };
-  const currencies = kind.startsWith("gold") ? ["NGN", "USD"] : kind === "send" ? ["NGN", "USD", "USDT"] : ["NGN", "USD", "USDT"];
-  return (
-    <Sheet open={open} onOpenChange={close}>
-      <SheetContent side="bottom" className="mx-auto max-h-[92vh] overflow-y-auto rounded-t-2xl border-border bg-background p-0 sm:bottom-4 sm:max-w-xl sm:rounded-2xl">
-        <div className="sticky top-0 z-10 border-b border-border bg-background px-5 py-5">
-          <SheetHeader>
-            <SheetTitle>{step !== "form" && step !== "success" ? <button onClick={() => setStep("form")} className="mr-2 align-middle"><ChevronLeft className="inline size-5" /></button> : null}{title}</SheetTitle>
-            <SheetDescription>Demo mode · No real funds will move</SheetDescription>
-          </SheetHeader>
-        </div>
-        <div className="p-5 pb-8">
-          {step === "form" && (
-            <div className="space-y-5">
-              {kind === "fund" && <div className="grid grid-cols-2 gap-2"><button className="choice-active">Bank transfer</button><button className="choice">Wallet details</button></div>}
-              <div>
-                <label className="form-label">{isGoldSell ? "Payout currency" : "Currency"}</label>
-                <div className="flex gap-2">
-                  {currencies.map((c) => (
-                    <button key={c} onClick={() => { setCurrency(c); if (c === to) setTo(c === "NGN" ? "USD" : "NGN") }} className={currency === c ? "currency-pill-active" : "currency-pill"}>{c}</button>
-                  ))}
-                </div>
-              </div>
-              {kind === "swap" && (
-                <div>
-                  <label className="form-label">Receive</label>
-                  <div className="flex gap-2">{currencies.filter((c) => c !== currency).map((c) => <button key={c} onClick={() => setTo(c)} className={to === c ? "currency-pill-active" : "currency-pill"}>{c}</button>)}</div>
-                </div>
-              )}
-              {kind === "send" && (
-                <div>
-                  <label className="form-label">Recipient</label>
-                  <select className="field" value={recipient} onChange={(e) => setRecipient(e.target.value)}>
-                    {recipients.map((r) => <option key={r.id}>{r.name}</option>)}
-                  </select>
-                </div>
-              )}
-              <div>
-                <label className="form-label">{isGoldSell ? "Gold quantity (grams)" : "Amount"}</label>
-                <div className="amount-field">
-                  <span>{isGoldSell ? "g" : currency === "NGN" ? "₦" : currency === "USD" ? "$" : "₮"}</span>
-                  <Input autoFocus inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} placeholder="0.00" />
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">Available: {isGoldSell ? `${gold.grams.toFixed(3)}g` : formatMoney(balances[currency], currency)}</p>
-              </div>
-              {(kind === "swap" || kind.startsWith("gold")) && numeric > 0 && (
-                <div className="rounded-lg border border-border bg-secondary/50 p-4 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Estimated {isGoldSell ? "payout" : kind === "gold-buy" ? "gold quantity" : "received"}</span><strong>{kind === "gold-buy" ? `${estimate.toFixed(4)}g` : formatMoney(estimate, kind === "swap" ? to : currency)}</strong></div>
-                  <div className="mt-2 flex justify-between text-xs text-muted-foreground"><span>Mock rate</span><span>{kind.startsWith("gold") ? `${formatMoney(goldPrice[currency === "USD" ? "USD" : "NGN"], currency)}/g` : "Includes 0.5% demo fee"}</span></div>
-                </div>
-              )}
-              {kind === "gold-buy" && (
-                <div className="flex items-start gap-3 rounded-lg bg-primary/8 p-4 text-xs text-muted-foreground"><Gem className="mt-0.5 size-4 shrink-0 text-primary" />Gold pricing is simulated and does not reflect a live commodity market.</div>
-              )}
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button size="lg" className="w-full" onClick={continueFlow}>Continue</Button>
-            </div>
-          )}
-          {step === "kyc" && (
-            <div className="space-y-5">
-              <div className="grid size-14 place-items-center rounded-full bg-primary/12 text-primary"><ShieldCheck /></div>
-              <div>
-                <h3 className="text-xl font-semibold">Verify to continue</h3>
-                <p className="mt-1 text-sm text-muted-foreground">Complete a quick identity check for this regulated transaction.</p>
-              </div>
-              <div className="grid grid-cols-2 gap-2"><button className="choice-active">BVN</button><button className="choice">NIN</button></div>
-              <Input className="h-12" inputMode="numeric" value={kyc} onChange={(e) => setKyc(e.target.value)} placeholder="Enter verification number" />
-              <Button className="w-full" size="lg" disabled={kyc.length < 10} onClick={() => { verify(); setStep("review") }}>Verify securely</Button>
-              <p className="text-center text-xs text-muted-foreground">Mock verification only. No identity service is connected.</p>
-            </div>
-          )}
-          {step === "review" && (
-            <div className="space-y-5">
-              <h3 className="font-display text-2xl">Review transaction</h3>
-              <div className="divide-y divide-border rounded-lg border border-border">
-                {[
-                  [isGoldSell ? "Quantity" : "Amount", isGoldSell ? `${numeric}g` : formatMoney(numeric, currency)],
-                  [kind === "send" ? "Recipient" : "Transaction", kind === "send" ? recipient : title],
-                  ["Estimated fee", formatMoney(Math.max(numeric * 0.005, 0), currency)],
-                ].map(([k, v]) => (
-                  <div key={k} className="flex justify-between gap-4 p-4 text-sm"><span className="text-muted-foreground">{k}</span><strong className="text-right">{v}</strong></div>
-                ))}
-              </div>
-              <Button size="lg" className="w-full" onClick={() => setStep("pin")}>Confirm transaction</Button>
-            </div>
-          )}
-          {step === "pin" && (
-            <div className="space-y-5 text-center">
-              <div>
-                <h3 className="text-xl font-semibold">{pinSet ? "Enter security PIN" : "Create security PIN"}</h3>
-                <p className="text-sm text-muted-foreground">Use four digits to protect sensitive actions.</p>
-              </div>
-              <div className="flex justify-center gap-3">{[0, 1, 2, 3].map((i) => <span key={i} className={`size-3 rounded-full border ${pin.length > i ? "border-primary bg-primary" : "border-border"}`} />)}</div>
-              <div className="mx-auto grid max-w-xs grid-cols-3 gap-2">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, "", 0, "⌫"].map((n, i) => (
-                  <button key={i} disabled={n === ""} onClick={() => n === "⌫" ? setPin((p) => p.slice(0, -1)) : setPin((p) => p.length < 4 ? p + String(n) : p)} className="keypad">{n}</button>
-                ))}
-              </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button size="lg" className="w-full" onClick={submit}>Authorize</Button>
-              <button className="text-sm text-primary">Forgot PIN?</button>
-            </div>
-          )}
-          {step === "loading" && (
-            <div className="grid min-h-72 place-items-center text-center">
-              <div>
-                <LoaderCircle className="mx-auto size-10 animate-spin text-primary" />
-                <p className="mt-4 font-medium">Processing securely…</p>
-                <p className="text-sm text-muted-foreground">Creating your mock transaction</p>
-              </div>
-            </div>
-          )}
-          {step === "success" && (
-            <div className="grid min-h-72 place-items-center text-center">
-              <div>
-                <span className="mx-auto grid size-16 place-items-center rounded-full bg-success/12 text-success"><Check className="size-8" /></span>
-                <h3 className="mt-5 font-display text-3xl">Transaction complete</h3>
-                <p className="mt-2 text-sm text-muted-foreground">Your balances and activity have been updated.</p>
-                <Button className="mt-7 w-full" size="lg" onClick={() => close(false)}>Done</Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
+  const [step, setStep] = useState("form"), [currency, setCurrency] = useState(presetCurrency), [amount, setAmount] = useState(""), [pin, setPin] = useState(""), [bvn, setBvn] = useState(""), [error, setError] = useState(""), [copied, setCopied] = useState(false);
+  useEffect(() => { if (open) setCurrency(presetCurrency); }, [open, presetCurrency]);
+  const numeric = Number(amount) || 0, isGoldSell = kind === "gold-sell", isFund = kind === "fund", account = bankAccounts[currency];
+  const title = { fund: "Fund Wallet", save: "Add to Safevest", withdraw: "Withdraw Savings", "gold-buy": "Buy Safevest Gold", "gold-sell": "Sell Gold" }[kind] ?? "Transaction";
+  const estimate = kind === "gold-buy" ? numeric / goldPrice[currency] : kind === "gold-sell" ? numeric * goldPrice[currency] * .995 : numeric;
+  const close = (value) => { onOpenChange(value); if (!value) setTimeout(() => { setStep("form"); setAmount(""); setPin(""); setError(""); }, 200); };
+  const continueFlow = () => { setError(""); if (numeric <= 0) return setError("Enter an amount greater than zero."); if (isGoldSell && numeric > gold.ounces) return setError("You do not have enough gold to sell this quantity."); if (!["fund","withdraw","gold-sell"].includes(kind) && numeric > balances[currency]) return setError("Your available balance is too low for this transaction."); if (!verified && ["save","withdraw","gold-buy","gold-sell"].includes(kind)) return setStep("kyc"); setStep("review"); };
+  const submit = () => { if (isFund) { completeAction({ type: kind, amount: numeric, currency }); return setStep("success"); } if (pin.length !== 4) return setError("Enter your 4-digit security PIN."); if (!pinSet) setupPin(); setStep("loading"); setTimeout(() => { completeAction({ type: kind, amount: numeric, currency, product: currency }); setStep("success"); }, 700); };
+  return <Sheet open={open} onOpenChange={close}><SheetContent side="bottom" className="mx-auto max-h-[94vh] overflow-y-auto rounded-t-2xl border-border bg-background p-0 sm:bottom-4 sm:max-w-xl sm:rounded-2xl"><div className="sticky top-0 z-10 border-b border-border bg-background px-5 py-5"><SheetHeader><SheetTitle>{!["form","success"].includes(step) && <button onClick={() => setStep("form")} className="mr-2 align-middle" aria-label="Back"><ChevronLeft className="inline size-5" /></button>}{title}</SheetTitle><SheetDescription>Frontend prototype · No real funds will move</SheetDescription></SheetHeader></div><div className="p-5 pb-8">
+    {step === "form" && <div className="space-y-5"><div><label className="form-label">{isGoldSell ? "Payout currency" : "Funding currency"}</label><div className="flex gap-2">{["USD","NGN"].map((c) => <Button key={c} variant={currency === c ? "default" : "outline"} onClick={() => setCurrency(c)}>{c}</Button>)}</div></div>
+      {isFund && <><div className="rounded-lg border border-primary/30 bg-primary/8 p-4"><p className="text-sm font-semibold">Transfer money to this account</p><div className="mt-4 space-y-3 text-sm">{[["Bank name",account.bankName],["Account name",account.accountName],["Account number",account.accountNumber]].map(([k,v]) => <div key={k} className="flex justify-between gap-4"><span className="text-muted-foreground">{k}</span><strong className="text-right">{v}</strong></div>)}</div><Button variant="outline" className="mt-4 w-full" onClick={async () => { await navigator.clipboard.writeText(account.accountNumber); setCopied(true); }}><Copy />{copied ? "Copied" : "Copy account number"}</Button></div><ol className="space-y-2 text-sm text-muted-foreground"><li><strong className="text-foreground">1.</strong> Transfer money to the displayed account.</li><li><strong className="text-foreground">2.</strong> Enter the amount you sent.</li><li><strong className="text-foreground">3.</strong> Confirm the transfer.</li></ol></>}
+      <div><label className="form-label">{isGoldSell ? "Gold weight (OZ)" : "Amount sent"}</label><div className="amount-field"><span>{isGoldSell ? "OZ" : currency === "USD" ? "$" : "₦"}</span><Input autoFocus={!isFund} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g,""))} placeholder="0.00" /></div><p className="mt-2 text-xs text-muted-foreground">{isFund ? `Enter the exact ${currency} amount transferred.` : `Available: ${isGoldSell ? formatOunces(gold.ounces) : formatMoney(balances[currency],currency)}`}</p></div>
+      {kind.startsWith("gold") && numeric > 0 && <div className="rounded-lg border border-border bg-secondary/50 p-4 text-sm"><div className="flex justify-between"><span className="text-muted-foreground">Estimated {isGoldSell ? "payout" : "gold weight"}</span><strong>{isGoldSell ? formatMoney(estimate,currency) : formatOunces(estimate)}</strong></div><div className="mt-2 flex justify-between text-xs text-muted-foreground"><span>Mock gold value</span><span>{formatMoney(goldPrice[currency],currency)} / OZ</span></div></div>}
+      {kind === "gold-buy" && <div className="flex gap-3 rounded-lg bg-primary/8 p-4 text-xs text-muted-foreground"><Gem className="size-4 shrink-0 text-primary" />Gold pricing is simulated and is not a live commodity price.</div>}{error && <p className="text-sm text-destructive">{error}</p>}<Button size="lg" className="w-full" onClick={continueFlow}>{isFund ? "Review transfer" : "Continue"}</Button>{isFund && <Button variant="ghost" className="w-full" onClick={() => close(false)}>Cancel</Button>}</div>}
+    {step === "kyc" && <div className="space-y-5"><span className="grid size-14 place-items-center rounded-full bg-primary/12 text-primary"><ShieldCheck /></span><div><h3 className="text-xl font-semibold">BVN verification</h3><p className="mt-1 text-sm text-muted-foreground">Nigerian users complete a lightweight mock BVN check before regulated actions.</p></div><Input className="h-12" inputMode="numeric" maxLength={11} value={bvn} onChange={(e) => setBvn(e.target.value.replace(/\D/g,""))} placeholder="Enter 11-digit BVN" /><Button className="w-full" size="lg" disabled={bvn.length !== 11} onClick={() => { verify(); setStep("review"); }}>Verify and continue</Button><p className="text-center text-xs text-muted-foreground">Mock verification only. No identity service is connected.</p></div>}
+    {step === "review" && <div className="space-y-5"><h3 className="font-display text-2xl">{isFund ? "Confirm your transfer" : "Review transaction"}</h3><div className="divide-y divide-border rounded-lg border border-border">{[[isGoldSell ? "Gold weight" : "Amount",isGoldSell ? formatOunces(numeric) : formatMoney(numeric,currency)],["Currency",currency],["Action",title],...(isFund ? [["Destination",account.accountName]] : [["Estimated fee",formatMoney(numeric*.005,currency)]])].map(([k,v]) => <div key={k} className="flex justify-between gap-4 p-4 text-sm"><span className="text-muted-foreground">{k}</span><strong className="text-right">{v}</strong></div>)}</div><p className="rounded-lg bg-secondary p-4 text-xs text-muted-foreground">{isFund ? "Confirm only after sending the exact amount. This prototype updates your mock balance immediately." : "Review these mock details before continuing."}</p><Button size="lg" className="w-full" onClick={() => isFund ? submit() : setStep("pin")}>{isFund ? "I've Sent This" : "Confirm transaction"}</Button><Button variant="ghost" className="w-full" onClick={() => close(false)}>Cancel</Button></div>}
+    {step === "pin" && <div className="space-y-5 text-center"><div><h3 className="text-xl font-semibold">{pinSet ? "Enter security PIN" : "Create security PIN"}</h3><p className="text-sm text-muted-foreground">Use four digits to protect sensitive actions.</p></div><div className="flex justify-center gap-3">{[0,1,2,3].map((i) => <span key={i} className={`size-3 rounded-full border ${pin.length > i ? "border-primary bg-primary" : "border-border"}`} />)}</div><div className="mx-auto grid max-w-xs grid-cols-3 gap-2">{[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map((n,i) => <button key={i} disabled={n === ""} onClick={() => n === "⌫" ? setPin((p) => p.slice(0,-1)) : setPin((p) => p.length < 4 ? p+String(n) : p)} className="keypad">{n}</button>)}</div>{error && <p className="text-sm text-destructive">{error}</p>}<Button size="lg" className="w-full" onClick={submit}>Authorize</Button></div>}
+    {step === "loading" && <div className="grid min-h-72 place-items-center text-center"><div><LoaderCircle className="mx-auto size-10 animate-spin text-primary" /><p className="mt-4 font-medium">Processing securely…</p></div></div>}
+    {step === "success" && <div className="grid min-h-72 place-items-center text-center"><div><span className="mx-auto grid size-16 place-items-center rounded-full bg-success/12 text-success"><Check className="size-8" /></span><h3 className="mt-5 font-display text-3xl">{isFund ? "Transfer confirmed" : "Transaction complete"}</h3><p className="mt-2 text-sm text-muted-foreground">Your mock balance and activity have been updated.</p><Button className="mt-7 w-full" size="lg" onClick={() => close(false)}>Done</Button></div></div>}
+  </div></SheetContent></Sheet>;
 }

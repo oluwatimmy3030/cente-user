@@ -1,51 +1,9 @@
 import { useState } from "react";
-import { ArrowDownToLine, Gem, RefreshCw, Send } from "lucide-react";
+import { ArrowDownToLine, Gem, Send } from "lucide-react";
 import { ActionFlow } from "./action-flow";
 import { AssetIcon, PageTitle, TransactionRow } from "./ui";
 import { Button } from "@/components/ui/button";
-import { formatMoney } from "@/data/mock-data";
+import { formatMoney, formatOunces, goldPrice, rates, user } from "@/data/mock-data";
 import { useCente } from "@/state/cente-context";
-
-export default function WalletPage() {
-  const { balances, gold, transactions } = useCente();
-  const [flow, setFlow] = useState(null);
-  const assets = ["NGN", "USD", "USDT", "GOLD"];
-  return (
-    <>
-      <PageTitle eyebrow="Your money" title="Wallet" copy="One view of every active CENTE balance." />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {assets.map((c) => (
-          <div key={c} className="panel p-5">
-            <div className="flex items-start justify-between">
-              <AssetIcon currency={c} />
-              <span className="text-xs text-muted-foreground">{c}</span>
-            </div>
-            <p className="mt-6 text-2xl font-semibold">{c === "GOLD" ? `${gold.grams.toFixed(3)}g` : formatMoney(balances[c], c)}</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {c === "GOLD" ? `${formatMoney(balances.GOLD)} market value · +13.9%` : "Available balance · Demo"}
-            </p>
-          </div>
-        ))}
-      </div>
-      <div className="mt-5 grid grid-cols-3 gap-3">
-        <Button variant="premium" onClick={() => setFlow({ kind: "fund", currency: "NGN" })}><ArrowDownToLine /> Fund</Button>
-        <Button variant="premium" onClick={() => setFlow({ kind: "send", currency: "NGN" })}><Send /> Send</Button>
-        <Button variant="premium" onClick={() => setFlow({ kind: "swap", currency: "NGN" })}><RefreshCw /> Swap</Button>
-      </div>
-      <div className="mt-8 grid gap-5 xl:grid-cols-[.7fr_1.3fr]">
-        <div className="balance-card rounded-xl p-5">
-          <Gem className="text-primary" />
-          <p className="mt-8 text-xs text-primary-foreground/60">Safevest Gold</p>
-          <h2 className="mt-1 font-display text-3xl text-primary-foreground">{gold.grams.toFixed(3)}g</h2>
-          <div className="mt-5 flex justify-between text-xs text-primary-foreground/60"><span>Invested</span><strong className="text-primary-foreground">{formatMoney(gold.invested)}</strong></div>
-          <Button className="mt-5 w-full" onClick={() => setFlow({ kind: "gold-buy", currency: "NGN" })}>Manage gold</Button>
-        </div>
-        <div className="panel p-5">
-          <h2 className="mb-2 text-lg font-semibold">Wallet activity</h2>
-          {transactions.slice(0, 5).map((tx) => <TransactionRow key={tx.id} tx={tx} />)}
-        </div>
-      </div>
-      <ActionFlow kind={flow?.kind ?? "fund"} presetCurrency={flow?.currency} open={Boolean(flow)} onOpenChange={(v) => !v && setFlow(null)} />
-    </>
-  );
-}
+import { Link } from "react-router-dom";
+export default function WalletPage(){const{balances,gold,transactions}=useCente();const[flow,setFlow]=useState(null);const total=balances.NGN+balances.USD*rates.NGN_USD;return <><PageTitle eyebrow="Accounts" title="Your Accounts" copy="USD and NGN wallets, account details, and your Safevest Gold holding."/><div className="balance-card rounded-xl p-6"><p className="text-xs text-primary-foreground/65">Total wallet balance</p><h2 className="mt-2 font-display text-4xl text-primary-foreground">{formatMoney(total)}</h2><p className="mt-2 text-xs text-primary-foreground/60">Wallet ID · {user.walletId} · Mock USD conversion</p></div><div className="mt-5 grid gap-4 sm:grid-cols-2">{["USD","NGN"].map((c)=><div key={c} className="panel p-5"><div className="flex justify-between"><AssetIcon currency={c}/><span className="text-xs text-muted-foreground">{c} Wallet</span></div><p className="mt-6 text-2xl font-semibold">{formatMoney(balances[c],c)}</p><p className="mt-1 text-xs text-muted-foreground">Available balance · Demo</p><div className="mt-5 grid grid-cols-2 gap-2"><Button variant="outline" onClick={()=>setFlow({kind:"fund",currency:c})}><ArrowDownToLine/>Fund</Button><Button asChild variant="outline"><Link to="/send"><Send/>Send</Link></Button></div></div>)}</div><div className="mt-5 grid gap-5 xl:grid-cols-[.7fr_1.3fr]"><Link to="/wealth?product=GOLD" className="balance-card rounded-xl p-5"><Gem className="text-primary-foreground"/><p className="mt-8 text-xs text-primary-foreground/60">Safevest Gold</p><h2 className="mt-1 font-display text-3xl text-primary-foreground">{formatOunces(gold.ounces)}</h2><p className="mt-2 text-sm text-primary-foreground/70">{formatMoney(gold.ounces*goldPrice.NGN)} mock value</p></Link><div className="panel p-5"><h2 className="mb-2 text-lg font-semibold">Account activity</h2>{transactions.slice(0,5).map((tx)=><TransactionRow key={tx.id} tx={tx}/>)}</div></div><ActionFlow kind={flow?.kind??"fund"} presetCurrency={flow?.currency} open={Boolean(flow)} onOpenChange={(v)=>!v&&setFlow(null)}/></>}

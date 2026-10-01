@@ -1,11 +1,45 @@
+export const countries = [
+  { name: "Nigeria", code: "NG", dialCode: "+234", flag: "🇳🇬" },
+  { name: "United States", code: "US", dialCode: "+1", flag: "🇺🇸" },
+  { name: "United Kingdom", code: "GB", dialCode: "+44", flag: "🇬🇧" },
+  { name: "Canada", code: "CA", dialCode: "+1", flag: "🇨🇦" },
+  { name: "Ghana", code: "GH", dialCode: "+233", flag: "🇬🇭" },
+  { name: "Kenya", code: "KE", dialCode: "+254", flag: "🇰🇪" },
+  { name: "South Africa", code: "ZA", dialCode: "+27", flag: "🇿🇦" },
+  { name: "United Arab Emirates", code: "AE", dialCode: "+971", flag: "🇦🇪" },
+  { name: "Germany", code: "DE", dialCode: "+49", flag: "🇩🇪" },
+  { name: "France", code: "FR", dialCode: "+33", flag: "🇫🇷" },
+  { name: "Ireland", code: "IE", dialCode: "+353", flag: "🇮🇪" },
+  { name: "Australia", code: "AU", dialCode: "+61", flag: "🇦🇺" },
+  { name: "India", code: "IN", dialCode: "+91", flag: "🇮🇳" },
+];
+
 export const user = {
-  firstName: "Samuel", lastName: "Adeyemi", country: "Nigeria", countryCode: "+234", phone: "801 234 5678", walletId: "CT-8042-1965",
+  firstName: "Samuel",
+  lastName: "Adeyemi",
+  country: "Nigeria",
+  countryCode: "+234",
+  isoCode: "NG",
+  phone: "801 234 5678",
+  walletId: "CT-8042-1965",
+  kycTier: "TIER_0_UNVERIFIED",
+  kycStatus: "unverified",
+  phoneVerified: false,
+  pinSet: false,
 };
 
 export const initialBalances = { USD: 2840.75, NGN: 1250450 };
-export const rates = { NGN_USD: 1548.2 };
+export const rates = { NGN_USD: 1548.2, USD_NGN: 1548.2 };
 export const goldPrice = { NGN: 4927300, USD: 4364 };
 export const initialGold = { ounces: 0.481, invested: 2080000 };
+
+export const virtualAccount = {
+  bankName: "Wema Bank / CENTE Partner",
+  accountName: "Samuel Adeyemi / CENTE",
+  accountNumber: "8042196501",
+  currency: "NGN",
+};
+
 export const bankAccounts = {
   USD: { bankName: "CENTE Partner Bank", accountName: "CENTE USD Collections", accountNumber: "021000021", currency: "USD" },
   NGN: { bankName: "CENTE Partner Bank", accountName: "CENTE NGN Collections", accountNumber: "8042196501", currency: "NGN" },
@@ -38,19 +72,21 @@ export const shareOrders = [
 ];
 
 export const initialTransactions = [
-  { id: "t1", title: "Safevest Gold purchase", subtitle: "0.167 OZ at a mock market price", amount: -820768, currency: "NGN", category: "Gold", status: "Completed", date: "Today, 10:42", quantity: 0.167, pricePerOunce: 4914778, fee: 2500 },
-  { id: "t2", title: "Wallet funded", subtitle: "Bank transfer", amount: 250000, currency: "NGN", category: "Money In", status: "Completed", date: "Yesterday, 16:18" },
+  { id: "t1", title: "Currency Swap (NGN to USD)", subtitle: "Instant Exchange", amount: 150, currency: "USD", category: "Swap", status: "Completed", date: "Today, 11:15", fee: 0 },
+  { id: "t2", title: "Wallet funded", subtitle: "Virtual Account Transfer", amount: 250000, currency: "NGN", category: "Money In", status: "Completed", date: "Yesterday, 16:18" },
   { id: "t3", title: "Sent to Ada Okafor", subtitle: "Local bank transfer", amount: -45000, currency: "NGN", category: "Money Out", status: "Completed", date: "18 Sep, 09:30", fee: 50 },
-  { id: "t4", title: "USD wallet funded", subtitle: "USD bank transfer", amount: 300, currency: "USD", category: "Money In", status: "Completed", date: "17 Sep, 14:05", fee: 0 },
+  { id: "t4", title: "USD wallet funded", subtitle: "Card / Fiat On-Ramp", amount: 300, currency: "USD", category: "Money In", status: "Completed", date: "17 Sep, 14:05", fee: 0 },
   { id: "t5", title: "Safevest USD deposit", subtitle: "Dollar reserve plan", amount: -500, currency: "USD", category: "Wealth", status: "Completed", date: "15 Sep, 08:20", fee: 0 },
 ];
 
 export const initialNotifications = [
-  { id: "n1", title: "Gold purchase completed", body: "0.167 OZ has been added to your Safevest Gold holding.", time: "12 min", read: false },
-  { id: "n2", title: "Wallet funded", body: "Your NGN wallet received ₦250,000.", time: "1 day", read: false },
-  { id: "n3", title: "Verification completed", body: "Your CENTE profile is now verified.", time: "3 days", read: true },
+  { id: "n1", title: "Currency Swap completed", body: "You successfully swapped ₦232,230 to $150.00.", time: "12 min", read: false },
+  { id: "n2", title: "Wallet funded", body: "Your NGN wallet received ₦250,000 via your virtual account.", time: "1 day", read: false },
+  { id: "n3", title: "Profile created", body: "Welcome to CENTE. Explore wealth plans and live rates.", time: "3 days", read: true },
 ];
+
 export const chartSeries = [22, 25, 24, 29, 31, 34, 33, 38, 41, 43, 47, 52];
 export const currencySymbol = (currency) => ({ NGN: "₦", USD: "$", GOLD: "₦" })[currency] ?? "";
 export const formatMoney = (value, currency = "NGN") => `${currencySymbol(currency)}${Math.abs(Number(value) || 0).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 export const formatOunces = (value) => `${Number(value || 0).toFixed(3)} OZ`;
+

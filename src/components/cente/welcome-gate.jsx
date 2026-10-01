@@ -89,7 +89,7 @@ export function WelcomeGate() {
 
               <div className="space-y-3">
                 <Button size="lg" className="w-full gap-2 shadow-gold" onClick={() => setStep("profile")}>
-                  Continue with Privy <ArrowRight className="size-4" />
+                  Continue<ArrowRight className="size-4" />
                 </Button>
                 <p className="text-center text-xs text-muted-foreground">
                   Secured by Privy Auth · Web3 & Email Verification

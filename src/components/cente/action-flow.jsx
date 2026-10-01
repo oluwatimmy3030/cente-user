@@ -79,7 +79,7 @@ export function ActionFlow({ kind, open, onOpenChange, presetCurrency = "NGN" })
       }
     }
 
-    // Step 1: Privy Phone SMS OTP gate
+    // Step 1: Phone SMS OTP gate (TODO: wire real provider)
     if (!user?.phoneVerified) {
       return setStep("otp");
     }
@@ -97,7 +97,7 @@ export function ActionFlow({ kind, open, onOpenChange, presetCurrency = "NGN" })
 
   const handleVerifyOtp = () => {
     if (otp.length < 4) {
-      return setError("Enter the 6-digit Privy SMS OTP code.");
+      return setError("Enter the 6-digit SMS OTP code.");
     }
     verifyPhoneOtp();
     setError("");
@@ -309,7 +309,7 @@ export function ActionFlow({ kind, open, onOpenChange, presetCurrency = "NGN" })
                   {isFund && currency === "USD" && (
                     <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 text-center">
                       <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-                        Privy Fiat On-Ramp
+                        Fiat On-Ramp
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">
                         Fund with Visa, Mastercard, Apple Pay, or US Bank Transfer via secure licensed ramp.
@@ -363,7 +363,7 @@ export function ActionFlow({ kind, open, onOpenChange, presetCurrency = "NGN" })
               <div>
                 <h3 className="text-xl font-semibold">Confirm your Phone Number</h3>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Privy has sent a 6-digit confirmation code to{" "}
+                  We sent a 6-digit confirmation code to{" "}
                   <strong>{user?.countryCode} {user?.phone}</strong>
                 </p>
               </div>

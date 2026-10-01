@@ -294,7 +294,7 @@ export default function SendPage() {
                 <Smartphone className="size-7" />
               </span>
               <div>
-                <h3 className="text-xl font-semibold">Verify Phone via Privy SMS OTP</h3>
+                <h3 className="text-xl font-semibold">Verify Phone via SMS OTP</h3>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Enter the 6-digit code sent to {user?.countryCode} {user?.phone} to authorize transfers.
                 </p>

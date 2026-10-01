@@ -92,7 +92,7 @@ export function WelcomeGate() {
                   Continue<ArrowRight className="size-4" />
                 </Button>
                 <p className="text-center text-xs text-muted-foreground">
-                  Secured by Privy Auth · Web3 & Email Verification
+                  Secured · Web3 & Email Verification
                 </p>
               </div>
             </>

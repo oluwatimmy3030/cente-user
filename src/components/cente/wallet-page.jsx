@@ -2,6 +2,7 @@
 import { useState } from "react";
 import {
   ArrowDownToLine,
+  ArrowLeftRight,
   Gem,
   Send,
   Wallet,
@@ -110,7 +111,7 @@ export default function WalletPage() {
       </div>
 
       {/* ---------------------------------------------------------------- */}
-      {/*  USD + NGN wallet cards                                           */}
+      {/*  Quick actions: Fund / Send / Swap                               */}
       {/* ---------------------------------------------------------------- */}
       <div className="grid gap-4 sm:grid-cols-2">
         {currencies.map((c) => {
@@ -131,7 +132,7 @@ export default function WalletPage() {
                 Available balance. Demo.
               </p>
 
-              <div className="mt-5 grid grid-cols-2 gap-2">
+              <div className="mt-5 grid grid-cols-3 gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -140,6 +141,15 @@ export default function WalletPage() {
                 >
                   <ArrowDownToLine className="size-4 shrink-0" />
                   <span className="truncate">Fund</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFlow({ kind: "swap", currency: c })}
+                  className="min-w-0"
+                >
+                  <ArrowLeftRight className="size-4 shrink-0" />
+                  <span className="truncate">Swap</span>
                 </Button>
                 <Button asChild variant="outline" size="sm" className="min-w-0">
                   <Link to="/send">

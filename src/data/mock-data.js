@@ -31,6 +31,18 @@ export const user = {
 export const initialBalances = { USD: 2840.75, NGN: 1250450 };
 export const rates = { NGN_USD: 1548.2, USD_NGN: 1548.2 };
 export const goldPrice = { NGN: 4927300, USD: 4364 };
+
+// Human-readable rate for a swap receipt / activity subtitle.
+export const swapRateLabel = (from, to) => {
+  if (from === "USD" && to === "NGN") return `1 USD = ₦${rates.NGN_USD.toLocaleString()}`;
+  if (from === "NGN" && to === "USD") return `₦${rates.NGN_USD.toLocaleString()} = 1 USD`;
+  if (from === "GOLD" || to === "GOLD") {
+    return from === "NGN" || to === "NGN"
+      ? `1 oz = ₦${goldPrice.NGN.toLocaleString()}`
+      : `1 oz = $${goldPrice.USD.toLocaleString()}`;
+  }
+  return "";
+};
 export const initialGold = { ounces: 0.481, invested: 2080000 };
 
 export const virtualAccount = {

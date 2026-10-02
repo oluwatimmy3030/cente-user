@@ -2,6 +2,7 @@
 import { Link } from "react-router-dom";
 import {
   ArrowDownToLine,
+  ArrowLeftRight,
   ArrowRight,
   Eye,
   EyeOff,
@@ -33,6 +34,7 @@ import { WelcomeGate } from "./welcome-gate";
 const ACTIONS = [
   { label: "Fund Wallet",   icon: ArrowDownToLine, kind: "fund" },
   { label: "Send Money",    icon: Send,            to: "/send" },
+  { label: "Swap",          icon: ArrowLeftRight,  kind: "swap" },
   { label: "Transactions",  icon: ReceiptText,     to: "/transactions" },
   { label: "Safevest USD",  icon: Landmark,        to: "/wealth?product=USD" },
   { label: "Safevest NGN",  icon: WalletCards,     to: "/wealth?product=NGN" },
@@ -248,12 +250,12 @@ export function HomePage() {
         <h2 className="mb-4 truncate text-base font-semibold sm:text-lg">
           Quick Actions
         </h2>
-        <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-6 sm:gap-3">
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-7 sm:gap-2.5">
           {ACTIONS.map((a) => {
             const Icon = a.icon;
             const inner = (
               <>
-                <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                   <Icon className="size-4 sm:size-4.5" />
                 </span>
                 <span className="line-clamp-2 text-center text-[11px] font-semibold leading-tight">
@@ -262,7 +264,7 @@ export function HomePage() {
               </>
             );
             const className =
-              "panel flex min-h-24 min-w-0 flex-col items-center justify-center gap-2 p-2.5 text-center transition-colors hover:border-primary/40 hover:bg-muted/30 sm:min-h-25 sm:p-3";
+              "panel flex min-h-20 min-w-0 flex-col items-center justify-center gap-1.5 p-2 text-center transition-colors hover:border-primary/40 hover:bg-muted/30 sm:min-h-22 sm:p-2.5";
 
             return a.to ? (
               <Link key={a.label} to={a.to} className={className}>

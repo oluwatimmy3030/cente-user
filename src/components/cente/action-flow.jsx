@@ -3,11 +3,42 @@ import { ArrowLeftRight, Check, ChevronLeft, Copy, LoaderCircle, Shield, ShieldC
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { formatMoney, rates, virtualAccount } from "@/data/mock-data";
+import { formatMoney, formatOunces, goldPrice, rates, swapRateLabel, virtualAccount } from "@/data/mock-data";
 import { useCente } from "@/state/cente-context";
 
+/* -------------------------------------------------------------------------- */
+/*  Swap assets & pairs                                                       */
+/* -------------------------------------------------------------------------- */
+
+const SWAP_ASSET = {
+  NGN: { label: "Naira", symbol: "₦", flag: "🇳🇬" },
+  USD: { label: "US Dollar", symbol: "$", flag: "🇺🇸" },
+  GOLD: { label: "Gold", symbol: "OZ", flag: "🥇" },
+};
+
+// Every supported pair, in the order they appear in the pair selector.
+const SWAP_PAIRS = [
+  { id: "NGN_USD", from: "NGN", to: "USD" },
+  { id: "USD_NGN", from: "USD", to: "NGN" },
+  { id: "USD_GOLD", from: "USD", to: "GOLD" },
+  { id: "GOLD_USD", from: "GOLD", to: "USD" },
+  { id: "NGN_GOLD", from: "NGN", to: "GOLD" },
+  { id: "GOLD_NGN", from: "GOLD", to: "NGN" },
+];
+
+// How many units of `to` one unit of `from` buys.
+function swapUnitRate(from, to) {
+  if (from === "NGN" && to === "USD") return 1 / rates.NGN_USD;
+  if (from === "USD" && to === "NGN") return rates.NGN_USD;
+  if (from === "USD" && to === "GOLD") return 1 / goldPrice.USD;
+  if (from === "GOLD" && to === "USD") return goldPrice.USD;
+  if (from === "NGN" && to === "GOLD") return 1 / goldPrice.NGN;
+  if (from === "GOLD" && to === "NGN") return goldPrice.NGN;
+  return 0;
+}
+
 export function ActionFlow({ kind, open, onOpenChange, presetCurrency = "NGN" }) {
-  const { user, balances, completeAction, verified, verify, verifyPhoneOtp, pinSet, setupPin } = useCente();
+  const { user, balances, gold, completeAction, verified, verify, verifyPhoneOtp, pinSet, setupPin } = useCente();
   const [step, setStep] = useState("form");
   const [currency, setCurrency] = useState(presetCurrency);
   const [amount, setAmount] = useState("");
@@ -17,7 +48,7 @@ export function ActionFlow({ kind, open, onOpenChange, presetCurrency = "NGN" })
   const [idNumber, setIdNumber] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
-  const [swapDirection, setSwapDirection] = useState("NGN_TO_USD"); // or "USD_TO_NGN"
+  const [swapPair, setSwapPair] = useState("NGN_USD");
 
   useEffect(() => {
     if (open) {
@@ -28,6 +59,7 @@ export function ActionFlow({ kind, open, onOpenChange, presetCurrency = "NGN" })
       setError("");
       setOtp("");
       setIdNumber("");
+      setSwapPair("NGN_USD");
     }
   }, [open, presetCurrency]);
 
@@ -36,17 +68,27 @@ export function ActionFlow({ kind, open, onOpenChange, presetCurrency = "NGN" })
   const isFund = kind === "fund";
   const isNigerian = user?.countryCode === "+234" || user?.country === "Nigeria";
 
-  // Swap estimations
-  const swapRate = rates?.NGN_USD ?? 1548.2;
-  const swapEstimatedReturn =
-    swapDirection === "NGN_TO_USD"
-      ? numeric > 0 ? (numeric / swapRate) : 0
-      : numeric > 0 ? (numeric * swapRate) : 0;
+  /* ---------------------------------------------------------------------- */
+  /*  Swap derivations                                                       */
+  /* ---------------------------------------------------------------------- */
+
+  const pair = SWAP_PAIRS.find((p) => p.id === swapPair) ?? SWAP_PAIRS[0];
+  const swapFrom = pair.from;
+  const swapTo = pair.to;
+  const fromAsset = SWAP_ASSET[swapFrom];
+  const toAsset = SWAP_ASSET[swapTo];
+  const unitRate = swapUnitRate(swapFrom, swapTo);
+  const swapEstimatedReturn = numeric > 0 ? numeric * unitRate : 0;
+  const rateLabel = swapRateLabel(swapFrom, swapTo);
+  const fromBalance = swapFrom === "GOLD" ? (gold?.ounces ?? 0) : (balances[swapFrom] ?? 0);
+
+  const fmtAsset = (value, asset) =>
+    asset === "GOLD" ? formatOunces(value) : formatMoney(value, asset);
 
   const title = {
     fund: "Fund Wallet",
     send: "Send Money",
-    swap: "Currency Swap (NGN ↔ USD)",
+    swap: `Swap ${SWAP_ASSET[swapFrom].label} → ${SWAP_ASSET[swapTo].label}`,
     save: "Add to Safevest",
     withdraw: "Withdraw Savings",
   }[kind] ?? "Transaction";
@@ -69,9 +111,12 @@ export function ActionFlow({ kind, open, onOpenChange, presetCurrency = "NGN" })
 
     // Balance validation
     if (isSwap) {
-      const sourceCurrency = swapDirection === "NGN_TO_USD" ? "NGN" : "USD";
-      if (numeric > (balances[sourceCurrency] ?? 0)) {
-        return setError(`Insufficient ${sourceCurrency} balance for this swap.`);
+      if (numeric > fromBalance) {
+        return setError(
+          swapFrom === "GOLD"
+            ? `Insufficient gold holding. You have ${formatOunces(fromBalance)}.`
+            : `Insufficient ${swapFrom} balance for this swap.`
+        );
       }
     } else if (!isFund) {
       if (numeric > (balances[currency] ?? 0)) {
@@ -128,16 +173,14 @@ export function ActionFlow({ kind, open, onOpenChange, presetCurrency = "NGN" })
     setStep("loading");
     setTimeout(() => {
       if (isSwap) {
-        const fromCurrency = swapDirection === "NGN_TO_USD" ? "NGN" : "USD";
-        const toCurrency = swapDirection === "NGN_TO_USD" ? "USD" : "NGN";
         completeAction({
           type: "swap",
-          fromCurrency,
-          toCurrency,
+          fromCurrency: swapFrom,
+          toCurrency: swapTo,
           fromAmount: numeric,
           toAmount: swapEstimatedReturn,
           amount: numeric,
-          currency: fromCurrency,
+          currency: swapFrom,
         });
       } else {
         completeAction({
@@ -187,33 +230,58 @@ export function ActionFlow({ kind, open, onOpenChange, presetCurrency = "NGN" })
                         variant="ghost"
                         size="sm"
                         className="h-8 gap-1 text-xs text-primary"
-                        onClick={() =>
-                          setSwapDirection((d) => (d === "NGN_TO_USD" ? "USD_TO_NGN" : "NGN_TO_USD"))
-                        }
+                        onClick={() => {
+                          const reversed = `${swapTo}_${swapFrom}`;
+                          if (SWAP_PAIRS.some((p) => p.id === reversed)) setSwapPair(reversed);
+                        }}
                       >
                         <ArrowLeftRight className="size-3.5" /> Switch Pair
                       </Button>
                     </div>
 
                     <div className="mt-3 grid grid-cols-2 gap-2 text-center">
-                      <div className={`rounded-lg border p-3 ${swapDirection === "NGN_TO_USD" ? "border-primary bg-primary/10 text-primary font-semibold" : "border-border"}`}>
+                      <div className="rounded-lg border border-primary bg-primary/10 p-3 font-semibold text-primary">
                         <p className="text-xs">You Sell</p>
-                        <strong className="text-sm">₦ Naira (NGN)</strong>
+                        <strong className="text-sm">
+                          {fromAsset.flag} {fromAsset.label} ({swapFrom})
+                        </strong>
                       </div>
-                      <div className={`rounded-lg border p-3 ${swapDirection === "USD_TO_NGN" ? "border-primary bg-primary/10 text-primary font-semibold" : "border-border"}`}>
+                      <div className="rounded-lg border border-primary bg-primary/10 p-3 font-semibold text-primary">
                         <p className="text-xs">You Buy</p>
-                        <strong className="text-sm">$ US Dollar (USD)</strong>
+                        <strong className="text-sm">
+                          {toAsset.flag} {toAsset.label} ({swapTo})
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="mt-3">
+                      <label className="text-xs font-semibold text-muted-foreground">Pair</label>
+                      <div className="mt-1 grid grid-cols-2 gap-1.5">
+                        {SWAP_PAIRS.map((p) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => setSwapPair(p.id)}
+                            className={`rounded-lg border px-2 py-2 text-[11px] font-semibold transition-colors ${
+                              p.id === swapPair
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-border text-muted-foreground hover:bg-muted/40"
+                            }`}
+                          >
+                            {SWAP_ASSET[p.from].symbol} → {SWAP_ASSET[p.to].symbol} {p.from}/{p.to}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   </div>
 
                   <div>
                     <label className="text-xs font-semibold text-muted-foreground">
-                      Amount to Convert ({swapDirection === "NGN_TO_USD" ? "NGN" : "USD"})
+                      Amount to Convert ({swapFrom})
                     </label>
                     <div className="relative mt-1 flex items-center">
                       <span className="flex h-12 items-center rounded-l-lg border border-r-0 border-border bg-secondary px-3 font-semibold text-muted-foreground">
-                        {swapDirection === "NGN_TO_USD" ? "₦" : "$"}
+                        {fromAsset.symbol}
                       </span>
                       <Input
                         inputMode="decimal"
@@ -225,7 +293,7 @@ export function ActionFlow({ kind, open, onOpenChange, presetCurrency = "NGN" })
                       />
                     </div>
                     <p className="mt-1.5 text-xs text-muted-foreground">
-                      Available: {formatMoney(balances[swapDirection === "NGN_TO_USD" ? "NGN" : "USD"], swapDirection === "NGN_TO_USD" ? "NGN" : "USD")}
+                      Available: {fmtAsset(fromBalance, swapFrom)}
                     </p>
                   </div>
 
@@ -234,16 +302,16 @@ export function ActionFlow({ kind, open, onOpenChange, presetCurrency = "NGN" })
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">You Receive</span>
                         <strong className="text-base text-primary">
-                          {formatMoney(swapEstimatedReturn, swapDirection === "NGN_TO_USD" ? "USD" : "NGN")}
+                          {fmtAsset(swapEstimatedReturn, swapTo)}
                         </strong>
                       </div>
                       <div className="mt-2 flex justify-between border-t border-border/60 pt-2 text-xs text-muted-foreground">
                         <span>Exchange Rate</span>
-                        <span>1 USD = ₦{swapRate.toLocaleString()}</span>
+                        <span>{rateLabel}</span>
                       </div>
                       <div className="mt-1 flex justify-between text-xs text-muted-foreground">
                         <span>Swap Fee</span>
-                        <span className="text-success font-medium">Free ($0.00)</span>
+                        <span className="font-medium text-success">Free ($0.00)</span>
                       </div>
                     </div>
                   )}
@@ -474,15 +542,15 @@ export function ActionFlow({ kind, open, onOpenChange, presetCurrency = "NGN" })
                   <>
                     <div className="flex justify-between p-3 text-sm">
                       <span className="text-muted-foreground">You Pay</span>
-                      <strong>{formatMoney(numeric, swapDirection === "NGN_TO_USD" ? "NGN" : "USD")}</strong>
+                      <strong>{fmtAsset(numeric, swapFrom)}</strong>
                     </div>
                     <div className="flex justify-between p-3 text-sm">
                       <span className="text-muted-foreground">You Get</span>
-                      <strong className="text-primary">{formatMoney(swapEstimatedReturn, swapDirection === "NGN_TO_USD" ? "USD" : "NGN")}</strong>
+                      <strong className="text-primary">{fmtAsset(swapEstimatedReturn, swapTo)}</strong>
                     </div>
                     <div className="flex justify-between p-3 text-sm">
                       <span className="text-muted-foreground">Exchange Rate</span>
-                      <span>1 USD = ₦{swapRate.toLocaleString()}</span>
+                      <span>{rateLabel}</span>
                     </div>
                   </>
                 ) : (
@@ -580,7 +648,7 @@ export function ActionFlow({ kind, open, onOpenChange, presetCurrency = "NGN" })
                 </h3>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {isSwap
-                    ? `You received ${formatMoney(swapEstimatedReturn, swapDirection === "NGN_TO_USD" ? "USD" : "NGN")}`
+                    ? `You received ${fmtAsset(swapEstimatedReturn, swapTo)}`
                     : `Your ${currency} balance has been updated.`}
                 </p>
                 <Button className="mt-6 w-full shadow-gold" size="lg" onClick={() => close(false)}>

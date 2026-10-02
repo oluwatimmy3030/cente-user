@@ -9,7 +9,7 @@ export default function TransactionsPage() {
   const [filter, setFilter] = useState("All");
   const [selected, setSelected] = useState(null);
   const shown = filter === "All" ? transactions : transactions.filter((t) => t.category === filter);
-  const categories = ["All", "Money In", "Money Out", "Wealth", "Swaps", "Gold"];
+  const categories = ["All", "Money In", "Money Out", "Wealth", "Swap", "Gold"];
   return (
     <>
       <PageTitle eyebrow="Activity" title="Transactions" copy="Every payment, conversion and wealth movement in one timeline." />

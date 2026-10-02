@@ -83,7 +83,7 @@ function pickIcon(category) {
       return Gem;
     case "Wealth":
       return Landmark;
-    case "Swaps":
+    case "Swap":
       return RefreshCw;
     default:
       return ArrowUpRight;

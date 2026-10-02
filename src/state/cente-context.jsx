@@ -16,6 +16,15 @@ const initialState = {
 };
 
 const CenteContext = createContext(null);
+
+const GOLD = "GOLD";
+
+// Price per ounce for a gold leg, denominated in the fiat side of the pair.
+const goldLegPrice = (fiat) => (fiat === "USD" ? goldPrice.USD : goldPrice.NGN);
+
+// NGN-equivalent value of a fiat leg.
+const fiatToNGN = (currency, amount) => (currency === "USD" ? amount * rates.NGN_USD : amount);
+
 const getStored = () => {
   if (typeof window === "undefined") return initialState;
   try {
@@ -48,7 +57,13 @@ function useCenteState() {
     const { type, amount, currency } = input;
     setState((current) => {
       const next = structuredClone(current);
-      let title = "Transaction", category = "Money Out", txAmount = -amount, subtitle = "CENTE transaction";
+      let title = "Transaction",
+        category = "Money Out",
+        txAmount = -amount,
+        txCurrency = currency,
+        txQuantity = null,
+        txPricePerOunce = null,
+        subtitle = "CENTE transaction";
 
       if (type === "fund") {
         next.balances[currency] += amount;
@@ -64,12 +79,41 @@ function useCenteState() {
       }
       if (type === "swap") {
         const { fromCurrency, toCurrency, fromAmount, toAmount } = input;
-        next.balances[fromCurrency] = (next.balances[fromCurrency] ?? 0) - fromAmount;
-        next.balances[toCurrency] = (next.balances[toCurrency] ?? 0) + toAmount;
-        title = `Currency Swap (${fromCurrency} → ${toCurrency})`;
+
+        // Debit leg
+        if (fromCurrency === GOLD) {
+          next.gold.ounces = (next.gold.ounces ?? 0) - fromAmount;
+          next.gold.invested = Math.max(0, (next.gold.invested ?? 0) - fiatToNGN(toCurrency, toAmount));
+        } else {
+          next.balances[fromCurrency] = (next.balances[fromCurrency] ?? 0) - fromAmount;
+        }
+
+        // Credit leg
+        if (toCurrency === GOLD) {
+          next.gold.ounces = (next.gold.ounces ?? 0) + toAmount;
+          next.gold.invested = (next.gold.invested ?? 0) + fiatToNGN(fromCurrency, fromAmount);
+        } else {
+          next.balances[toCurrency] = (next.balances[toCurrency] ?? 0) + toAmount;
+        }
+
+        title = `Swapped ${fromCurrency} → ${toCurrency}`;
         category = "Swap";
-        txAmount = toAmount;
-        subtitle = `1 USD = ₦${rates.NGN_USD.toLocaleString()}`;
+        subtitle = swapRateLabel(fromCurrency, toCurrency);
+
+        // Gold can't be rendered as money, so record the fiat side instead.
+        if (toCurrency === GOLD) {
+          txAmount = -fromAmount;
+          txCurrency = fromCurrency;
+          txQuantity = toAmount;
+          txPricePerOunce = goldLegPrice(fromCurrency);
+        } else {
+          txAmount = toAmount;
+          txCurrency = toCurrency;
+          if (fromCurrency === GOLD) {
+            txQuantity = fromAmount;
+            txPricePerOunce = goldLegPrice(toCurrency);
+          }
+        }
       }
       if (type === "save") {
         next.balances[currency] -= amount;
@@ -104,7 +148,7 @@ function useCenteState() {
         title,
         subtitle,
         amount: txAmount,
-        currency: type === "swap" ? input.toCurrency : currency,
+        currency: txCurrency,
         category,
         status: "Completed",
         date: "Just now",
@@ -114,6 +158,12 @@ function useCenteState() {
       if (type.startsWith("gold")) {
         transaction.quantity = type === "gold-buy" ? amount / goldPrice[currency] : amount;
         transaction.pricePerOunce = goldPrice[currency];
+      }
+
+      // Gold leg on a swap (already computed above).
+      if (type === "swap" && txQuantity !== null) {
+        transaction.quantity = txQuantity;
+        transaction.pricePerOunce = txPricePerOunce;
       }
 
       next.transactions.unshift(transaction);
